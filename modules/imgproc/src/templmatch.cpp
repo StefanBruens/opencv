@@ -563,8 +563,7 @@ static bool ocl_matchTemplate( InputArray _img, InputArray _templ, OutputArray _
 
 #include "opencv2/core/hal/hal.hpp"
 
-void crossCorr( const Mat& img, const Mat& _templ, Mat& corr,
-                Size corrsize, int ctype)
+void crossCorr( const Mat& img, const Mat& _templ, Mat& corr)
 {
     const double blockScale = 4.5;
     const int minBlockSize = 256;
@@ -573,7 +572,7 @@ void crossCorr( const Mat& img, const Mat& _templ, Mat& corr,
     Mat templ = _templ;
     int depth = img.depth(), cn = img.channels();
     int tdepth = templ.depth(), tcn = templ.channels();
-    int cdepth = CV_MAT_DEPTH(ctype), ccn = CV_MAT_CN(ctype);
+    int cdepth = corr.depth(), ccn = corr.channels();
 
     CV_Assert( img.dims <= 2 && templ.dims <= 2 && corr.dims <= 2 );
 
@@ -584,10 +583,8 @@ void crossCorr( const Mat& img, const Mat& _templ, Mat& corr,
     }
 
     CV_Assert( depth == tdepth || tdepth == CV_32F);
-    CV_Assert( corrsize.height <= img.rows + templ.rows - 1 &&
-               corrsize.width <= img.cols + templ.cols - 1 );
-
-    corr.create(corrsize, ctype);
+    CV_Assert( corr.rows <= img.rows + templ.rows - 1 &&
+               corr.cols <= img.cols + templ.cols - 1 );
 
     int maxDepth = depth > CV_8S ? CV_64F : std::max(std::max(CV_32F, tdepth), cdepth);
     Size blocksize, dftsize;
@@ -808,8 +805,8 @@ static void matchTemplateMask( InputArray _img, InputArray _templ, OutputArray _
         Mat mask2_templ = templ.mul(mask2);
 
         Mat corr(corrSize, CV_32F);
-        crossCorr( img, mask2_templ, corr, corr.size(), corr.type());
-        crossCorr( img2, mask, result, result.size(), result.type());
+        crossCorr( img, mask2_templ, corr);
+        crossCorr( img2, mask, result);
 
         result -= corr * 2;
         result += templSum2;
@@ -823,8 +820,8 @@ static void matchTemplateMask( InputArray _img, InputArray _templ, OutputArray _
         }
 
         Mat corr(corrSize, CV_32F);
-        crossCorr( img2, mask2, corr, corr.size(), corr.type());
-        crossCorr( img, mask_templ, result, result.size(), result.type());
+        crossCorr( img2, mask2, corr);
+        crossCorr( img, mask_templ, result);
 
         sqrt(corr, corr);
         result = result.mul(1/corr);
@@ -1118,7 +1115,7 @@ void cv::matchTemplate( InputArray _img, InputArray _templ, OutputArray _result,
 
     CV_IPP_RUN_FAST(ipp_matchTemplate(img, templ, result, method))
 
-    crossCorr( img, templ, result, result.size(), result.type());
+    crossCorr( img, templ, result);
 
     common_matchTemplate(img, templ, result, method, cn);
 }
