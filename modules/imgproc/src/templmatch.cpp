@@ -565,7 +565,7 @@ static bool ocl_matchTemplate( InputArray _img, InputArray _templ, OutputArray _
 
 void crossCorr( const Mat& img, const Mat& _templ, Mat& corr,
                 Size corrsize, int ctype,
-                Point anchor, double delta, int borderType )
+                Point anchor, int borderType )
 {
     const double blockScale = 4.5;
     const int minBlockSize = 256;
@@ -587,8 +587,6 @@ void crossCorr( const Mat& img, const Mat& _templ, Mat& corr,
     CV_Assert( depth == tdepth || tdepth == CV_32F);
     CV_Assert( corrsize.height <= img.rows + templ.rows - 1 &&
                corrsize.width <= img.cols + templ.cols - 1 );
-
-    CV_Assert( ccn == 1 || delta == 0 );
 
     corr.create(corrsize, ctype);
 
@@ -737,7 +735,7 @@ void crossCorr( const Mat& img, const Mat& _templ, Mat& corr,
                 if( cdepth != maxDepth )
                 {
                     Mat plane(bsz, cdepth, &buf[0]);
-                    src.convertTo(plane, cdepth, 1, delta);
+                    src.convertTo(plane, cdepth);
                     src = plane;
                 }
                 int pairs[] = {0, k};
@@ -746,7 +744,7 @@ void crossCorr( const Mat& img, const Mat& _templ, Mat& corr,
             else
             {
                 if( k == 0 )
-                    src.convertTo(cdst, cdepth, 1, delta);
+                    src.convertTo(cdst, cdepth);
                 else
                 {
                     if( maxDepth != cdepth )
@@ -815,8 +813,8 @@ static void matchTemplateMask( InputArray _img, InputArray _templ, OutputArray _
         Mat mask2_templ = templ.mul(mask2);
 
         Mat corr(corrSize, CV_32F);
-        crossCorr( img, mask2_templ, corr, corr.size(), corr.type(), Point(0,0), 0, 0 );
-        crossCorr( img2, mask, result, result.size(), result.type(), Point(0,0), 0, 0 );
+        crossCorr( img, mask2_templ, corr, corr.size(), corr.type(), Point(0,0), 0 );
+        crossCorr( img2, mask, result, result.size(), result.type(), Point(0,0), 0 );
 
         result -= corr * 2;
         result += templSum2;
@@ -830,8 +828,8 @@ static void matchTemplateMask( InputArray _img, InputArray _templ, OutputArray _
         }
 
         Mat corr(corrSize, CV_32F);
-        crossCorr( img2, mask2, corr, corr.size(), corr.type(), Point(0,0), 0, 0 );
-        crossCorr( img, mask_templ, result, result.size(), result.type(), Point(0,0), 0, 0 );
+        crossCorr( img2, mask2, corr, corr.size(), corr.type(), Point(0,0), 0 );
+        crossCorr( img, mask_templ, result, result.size(), result.type(), Point(0,0), 0 );
 
         sqrt(corr, corr);
         result = result.mul(1/corr);
@@ -1125,7 +1123,7 @@ void cv::matchTemplate( InputArray _img, InputArray _templ, OutputArray _result,
 
     CV_IPP_RUN_FAST(ipp_matchTemplate(img, templ, result, method))
 
-    crossCorr( img, templ, result, result.size(), result.type(), Point(0,0), 0, 0);
+    crossCorr( img, templ, result, result.size(), result.type(), Point(0,0), 0);
 
     common_matchTemplate(img, templ, result, method, cn);
 }
