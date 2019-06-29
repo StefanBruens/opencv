@@ -565,7 +565,7 @@ static bool ocl_matchTemplate( InputArray _img, InputArray _templ, OutputArray _
 
 void crossCorr( const Mat& img, const Mat& _templ, Mat& corr,
                 Size corrsize, int ctype,
-                Point anchor, int borderType )
+                Point anchor)
 {
     const double blockScale = 4.5;
     const int minBlockSize = 256;
@@ -663,13 +663,9 @@ void crossCorr( const Mat& img, const Mat& _templ, Mat& corr,
     Point roiofs(0,0);
     Mat img0 = img;
 
-    if( !(borderType & BORDER_ISOLATED) )
-    {
-        img.locateROI(wholeSize, roiofs);
-        img0.adjustROI(roiofs.y, wholeSize.height-img.rows-roiofs.y,
-                       roiofs.x, wholeSize.width-img.cols-roiofs.x);
-    }
-    borderType |= BORDER_ISOLATED;
+    img.locateROI(wholeSize, roiofs);
+    img0.adjustROI(roiofs.y, wholeSize.height-img.rows-roiofs.y,
+                   roiofs.x, wholeSize.width-img.cols-roiofs.x);
 
     Ptr<hal::DFT2D> cF, cR;
     int f = CV_HAL_DFT_IS_INPLACE;
@@ -712,7 +708,7 @@ void crossCorr( const Mat& img, const Mat& _templ, Mat& corr,
 
             if( x2 - x1 < dsz.width || y2 - y1 < dsz.height )
                 copyMakeBorder(dst1, dst, y1-y0, dst.rows-dst1.rows-(y1-y0),
-                               x1-x0, dst.cols-dst1.cols-(x1-x0), borderType);
+                               x1-x0, dst.cols-dst1.cols-(x1-x0), BORDER_ISOLATED);
 
             if (bsz.height == blocksize.height)
                 cF->apply(dftImg.data, (int)dftImg.step, dftImg.data, (int)dftImg.step);
@@ -813,8 +809,8 @@ static void matchTemplateMask( InputArray _img, InputArray _templ, OutputArray _
         Mat mask2_templ = templ.mul(mask2);
 
         Mat corr(corrSize, CV_32F);
-        crossCorr( img, mask2_templ, corr, corr.size(), corr.type(), Point(0,0), 0 );
-        crossCorr( img2, mask, result, result.size(), result.type(), Point(0,0), 0 );
+        crossCorr( img, mask2_templ, corr, corr.size(), corr.type(), Point(0,0));
+        crossCorr( img2, mask, result, result.size(), result.type(), Point(0,0));
 
         result -= corr * 2;
         result += templSum2;
@@ -828,8 +824,8 @@ static void matchTemplateMask( InputArray _img, InputArray _templ, OutputArray _
         }
 
         Mat corr(corrSize, CV_32F);
-        crossCorr( img2, mask2, corr, corr.size(), corr.type(), Point(0,0), 0 );
-        crossCorr( img, mask_templ, result, result.size(), result.type(), Point(0,0), 0 );
+        crossCorr( img2, mask2, corr, corr.size(), corr.type(), Point(0,0));
+        crossCorr( img, mask_templ, result, result.size(), result.type(), Point(0,0));
 
         sqrt(corr, corr);
         result = result.mul(1/corr);
@@ -1123,7 +1119,7 @@ void cv::matchTemplate( InputArray _img, InputArray _templ, OutputArray _result,
 
     CV_IPP_RUN_FAST(ipp_matchTemplate(img, templ, result, method))
 
-    crossCorr( img, templ, result, result.size(), result.type(), Point(0,0), 0);
+    crossCorr( img, templ, result, result.size(), result.type(), Point(0,0));
 
     common_matchTemplate(img, templ, result, method, cn);
 }
