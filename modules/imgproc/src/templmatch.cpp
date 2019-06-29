@@ -559,13 +559,12 @@ static bool ocl_matchTemplate( InputArray _img, InputArray _templ, OutputArray _
     return caller(_img, _templ, _result);
 }
 
-#endif
+#endif // HAVE_OPENCL
 
 #include "opencv2/core/hal/hal.hpp"
 
 void crossCorr( const Mat& img, const Mat& _templ, Mat& corr,
-                Size corrsize, int ctype,
-                Point anchor)
+                Size corrsize, int ctype)
 {
     const double blockScale = 4.5;
     const int minBlockSize = 256;
@@ -682,7 +681,7 @@ void crossCorr( const Mat& img, const Mat& _templ, Mat& corr,
         Size bsz(std::min(blocksize.width, corr.cols - x),
                  std::min(blocksize.height, corr.rows - y));
         Size dsz(bsz.width + templ.cols - 1, bsz.height + templ.rows - 1);
-        int x0 = x - anchor.x + roiofs.x, y0 = y - anchor.y + roiofs.y;
+        int x0 = x - roiofs.x, y0 = y - roiofs.y;
         int x1 = std::max(0, x0), y1 = std::max(0, y0);
         int x2 = std::min(img0.cols, x0 + dsz.width);
         int y2 = std::min(img0.rows, y0 + dsz.height);
@@ -809,8 +808,8 @@ static void matchTemplateMask( InputArray _img, InputArray _templ, OutputArray _
         Mat mask2_templ = templ.mul(mask2);
 
         Mat corr(corrSize, CV_32F);
-        crossCorr( img, mask2_templ, corr, corr.size(), corr.type(), Point(0,0));
-        crossCorr( img2, mask, result, result.size(), result.type(), Point(0,0));
+        crossCorr( img, mask2_templ, corr, corr.size(), corr.type());
+        crossCorr( img2, mask, result, result.size(), result.type());
 
         result -= corr * 2;
         result += templSum2;
@@ -824,8 +823,8 @@ static void matchTemplateMask( InputArray _img, InputArray _templ, OutputArray _
         }
 
         Mat corr(corrSize, CV_32F);
-        crossCorr( img2, mask2, corr, corr.size(), corr.type(), Point(0,0));
-        crossCorr( img, mask_templ, result, result.size(), result.type(), Point(0,0));
+        crossCorr( img2, mask2, corr, corr.size(), corr.type());
+        crossCorr( img, mask_templ, result, result.size(), result.type());
 
         sqrt(corr, corr);
         result = result.mul(1/corr);
@@ -1119,7 +1118,7 @@ void cv::matchTemplate( InputArray _img, InputArray _templ, OutputArray _result,
 
     CV_IPP_RUN_FAST(ipp_matchTemplate(img, templ, result, method))
 
-    crossCorr( img, templ, result, result.size(), result.type(), Point(0,0));
+    crossCorr( img, templ, result, result.size(), result.type());
 
     common_matchTemplate(img, templ, result, method, cn);
 }
